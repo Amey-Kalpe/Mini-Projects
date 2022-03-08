@@ -1,10 +1,11 @@
+import os
 import requests
+from twilio.rest import Client
+
+# Download the helper library from https://www.twilio.com/docs/python/install
 
 STOCK = "TSLA"
 COMPANY_NAME = "Tesla Inc"
-
-## STEP 1: Use https://www.alphavantage.co
-# When STOCK price increase/decreases by 5% between yesterday and the day before yesterday then print("Get News").
 
 STOCK_URL = "https://www.alphavantage.co/query"
 stock_params = {
@@ -16,23 +17,32 @@ stock = requests.get(STOCK_URL, params=stock_params)
 stock_data = stock.json()
 change_percent = float(stock_data.get("Global Quote").get("10. change percent")[:-1])
 
+account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+
 if 5 <= change_percent <= -5:
-    print("Get News")
+    client = Client(account_sid, auth_token)
 
-## STEP 2: Use https://newsapi.org
-# Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME.
+    NEWSAPI_URL = "https://newsapi.org/v2/everything"
+    newsapi_params = {
+        "apiKey": "09e35f286b2e4c3fba4c4bdf217adc73",
+        "q": COMPANY_NAME,
+        "pageSize": 3,
+    }
 
-## STEP 3: Use https://www.twilio.com
-# Send a seperate message with the percentage change and each article's title and description to your phone number.
+    news = requests.get(NEWSAPI_URL, newsapi_params)
+    news_data = news.json()
+    articles = news_data.get("articles")
 
+    for article in articles:
+        if change_percent >= 5:
+            news = f"TSLA: 🔺{int(change_percent)}\nTitle:\n{article.get('title')}\n\nDescription:\n{article.get('description')}\n\nRead here:\n{article.get('url')}"
+        elif change_percent <= -5:
+            news = f"TSLA: 🔻{int(change_percent)}\nTitle:\n{article.get('title')}\n\nDescription:\n{article.get('description')}\n\nRead here:\n{article.get('url')}"
 
-# Optional: Format the SMS message like this:
-"""
-    TSLA: 🔺2%
-    Headline: Were Hedge Funds Right About Piling Into Tesla Inc. (TSLA)?. 
-    Brief: We at Insider Monkey have gone over 821 13F filings that hedge funds and prominent investors are required to file by the SEC The 13F filings show the funds' and investors' portfolio positions as of March 31st, near the height of the coronavirus market crash.
-    or
-    "TSLA: 🔻5%
-    Headline: Were Hedge Funds Right About Piling Into Tesla Inc. (TSLA)?. 
-    Brief: We at Insider Monkey have gone over 821 13F filings that hedge funds and prominent investors are required to file by the SEC The 13F filings show the funds' and investors' portfolio positions as of March 31st, near the height of the coronavirus market crash.
-"""
+        message = client.messages.create(
+            body=news,
+            from_="+16625063427",
+            to="+918149970187",
+        )
+        print(message.status)
