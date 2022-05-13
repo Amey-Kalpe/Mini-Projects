@@ -2,7 +2,6 @@
 """
 
 import os
-from dateutil.parser import isoparse
 from twilio.rest import Client
 
 
@@ -19,7 +18,7 @@ class NotificationManager:
         Args:
             journey_details (dict): details of flight
         """
-        message = f"Low Price Alert!! Only £{journey_details.get('price')} to fly from London-STN to {journey_details.get('city')}-{journey_details.get('airport')}, from {journey_details.get("arr")}"
+        message = f"Low Price Alert!! Only £{journey_details.get('price')} to fly from London-STN to {journey_details.get('city')}-{journey_details.get('airport')}, from {journey_details.get('arr')}"
         client = Client(self.account_sid, self.auth_token)
         message = client.messages.create(
             body=message,

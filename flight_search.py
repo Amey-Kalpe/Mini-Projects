@@ -1,3 +1,5 @@
+import os
+
 import requests
 
 
@@ -6,7 +8,7 @@ class FlightSearch:
 
     def __init__(self) -> None:
         self.url = "https://tequila-api.kiwi.com/locations/query"
-        self.api_key = "n7xk0bryFDGEsUwuc20khcrcwkqZjdn6"
+        self.api_key = os.getenv("TEQUILA_FLIGHT_KEY")
 
     def get_code(self, term):
         """Get the IATA code for the given location

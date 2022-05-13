@@ -8,17 +8,9 @@ class DataManager:
     """This class is responsible for talking to the Google Sheet."""
 
     def __init__(self) -> None:
-        self.app_id = "MzZlYjgzMDU="
-        self.api_key = "MDk1NTFjMmYxNjIzYjQ3ODVkOWVjZGY0OTVmNDBiN2E="
-        self.add_row_sheety = (
-            "https://api.sheety.co/1020b1ffdbc6032ec47ba6dd5c3beb3a/flightDeals/prices"
-        )
-        self.edit_row_sheety = (
-            "https://api.sheety.co/1020b1ffdbc6032ec47ba6dd5c3beb3a/flightDeals/prices"
-        )
-        self.get_row_sheety = (
-            "https://api.sheety.co/1020b1ffdbc6032ec47ba6dd5c3beb3a/flightDeals/prices"
-        )
+        self.add_row_sheety = ""
+        self.edit_row_sheety = ""
+        self.get_row_sheety = ""
 
     def get_rows(self):
         """Get the data present in Flight Deals Google Sheet"""

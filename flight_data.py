@@ -1,4 +1,6 @@
 """Module to get the flight data within 6 months"""
+import os
+
 import requests
 
 
@@ -9,7 +11,7 @@ class FlightData:
     def __init__(self) -> None:
         self.url = "https://tequila-api.kiwi.com/v2/search"
         self.fly_from = "LON"
-        self.api_key = "n7xk0bryFDGEsUwuc20khcrcwkqZjdn6"
+        self.api_key = os.getenv("TEQUILA_FLIGHT_KEY")
 
     def search_flight_price(self, params: dict):
         """Search for flights within the given time period
