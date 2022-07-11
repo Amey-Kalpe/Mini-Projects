@@ -1,14 +1,16 @@
 """This file will need to use the DataManager,FlightSearch, FlightData, NotificationManager classes to achieve the program requirements."""
-from data_manager import DataManager
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from data_manager import DataManager
 from flight_data import FlightData
 from notification_manager import NotificationManager
 
+# NOTE: commented code of FlightSearch is to be run only once to update the sheet with airport codes.
 # from flight_search import FlightSearch
 
-data_mng = DataManager()
 # flight_search = FlightSearch()
+
+data_mng = DataManager()
 
 sheet_data = data_mng.get_rows()
 sheet_data_length = len(sheet_data)
