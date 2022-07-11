@@ -5,7 +5,7 @@ import requests
 
 
 class DataManager:
-    """This class is responsible for talking to the Google Sheet."""
+    """This class is responsible for talking to the Google Sheet using Sheety API."""
 
     def __init__(self) -> None:
         self.add_row_sheety = ""
