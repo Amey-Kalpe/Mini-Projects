@@ -1,3 +1,5 @@
-# Mini-Projects
+# Flight Deals Finder
 
-## A simple place for all python mini-projects.
+## Functionality
+
+- 
