@@ -1,6 +1,6 @@
-"""Module to manage data in Google Sheets using Sheety
-"""
+"""Module to manage data in Google Sheets using Sheety"""
 
+import os
 import requests
 
 
@@ -8,9 +8,8 @@ class DataManager:
     """This class is responsible for talking to the Google Sheet using Sheety API."""
 
     def __init__(self) -> None:
-        self.add_row_sheety = ""
-        self.edit_row_sheety = ""
-        self.get_row_sheety = ""
+        self.edit_row_sheety = os.getenv("EDIT_ROW_SHEETY")
+        self.get_row_sheety = os.getenv("GET_ROW_SHEETY")
 
     def get_rows(self):
         """Get the data present in Flight Deals Google Sheet"""

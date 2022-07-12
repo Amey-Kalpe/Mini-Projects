@@ -1,13 +1,13 @@
-"""This file will need to use the DataManager,FlightSearch, FlightData, NotificationManager classes to achieve the program requirements."""
+"""Get the best deal for flight booking notified based on the To and From location in google sheet."""
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from data_manager import DataManager
 from flight_data import FlightData
 from notification_manager import NotificationManager
 
-# NOTE: commented code of FlightSearch is to be run only once to update the sheet with airport codes.
+# NOTE: commented code of FlightSearch is to be run only once to update the sheet with city IATA codes.
 # from flight_search import FlightSearch
-
 # flight_search = FlightSearch()
 
 data_mng = DataManager()

@@ -9,8 +9,8 @@ class NotificationManager:
     """This class is responsible for sending notifications with the deal flight details."""
 
     def __init__(self) -> None:
-        self.account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-        self.auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+        self.account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        self.auth_token = os.getenv("TWILIO_AUTH_TOKEN")
 
     def send_notification(self, journey_details):
         """Send notification about the journey
