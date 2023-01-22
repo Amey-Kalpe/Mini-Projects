@@ -6,8 +6,8 @@ class Movie(db.Model):
     title = db.Column(db.String(30), unique=True, nullable=False)
     year = db.Column(db.String(10), nullable=False)
     description = db.Column(db.String(500), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)
-    ranking = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Integer, nullable=True)
+    ranking = db.Column(db.Integer, nullable=True)
     review = db.Column(db.String(500), nullable=True)
     img_url = db.Column(db.String(200), nullable=False)
 
@@ -21,4 +21,6 @@ def get_all_movies():
 
 
 if __name__ == "__main__":
-    pass
+    with app.app_context():
+        Movie.__table__.drop()
+        db.create_all()

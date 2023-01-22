@@ -39,29 +39,51 @@ def delete(movie_id):
     return redirect(url_for("home"))
 
 
+@app.route("/select", methods=["POST"])
+def select():
+    params = {
+        "api_key": os.getenv("MOVIE_API_KEY"),
+        "query": request.form.get("title")
+    }
+    search_url = "https://api.themoviedb.org/3/search/movie"
+    search_response = requests.get(search_url, params=params)
+    results = search_response.json().get("results")
+    return render_template("select.html", results=results)
+
+
 @app.route("/add", methods=["GET", "POST"])
 def add():
     form = AddMovieForm()
 
-    if request.method == "POST":
+    movie_id = request.args.get("movie_id")
+    if movie_id:
         params = {
-            "api_key": os.getenv("MOVIE_API_KEY"),
-            "query": request.form.get("title")
+            "api_key": os.getenv("MOVIE_API_KEY")
         }
-        search_url = "https://api.themoviedb.org/3/search/movie"
-        search_response = requests.get(search_url, params=params)
-        movie_id = search_response.json().get("results")[0].get("id")
         details_url = f"https://api.themoviedb.org/3/movie/{movie_id}"
-        details_response = requests.get(
-            details_url, params={"api_key": params["api_key"]})
+        resp_json = requests.get(
+            details_url, params={"api_key": params["api_key"]}).json()
 
-    # TODO:
-    # Add button redirects to '/select'
-    # After a movie is selected, that movie's id from api response should be passed to '/add'
-    # Redirect to '/edit' after movie is added successfully
+        poster_img = resp_json.get('poster_path')
+        image_url = f"https://image.tmdb.org/t/p/w500{poster_img}"
+
+        new_movie = Movie(
+            id=movie_id,
+            title=resp_json.get("original_title"),
+            year=resp_json.get("release_date"),
+            description=resp_json.get("overview"),
+            img_url=image_url
+        )
+        with app.app_context():
+            db.session.add(new_movie)
+            db.session.commit()
+
+        return redirect(url_for('edit', movie_id=movie_id))
 
     return render_template("add.html", form=form)
 
+
+@app.route("/clear")
+def clear():
     with app.app_context():
-        # db.session.add(new_movie)
-        db.session.commit()
+        Movie.__table__.drop(db.engine)

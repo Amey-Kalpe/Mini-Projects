@@ -14,7 +14,9 @@
 <div class="container">
     <h1 class="heading">Select Movie</h1>
   <p>
-    <a href="#"> MOVIE TITLE - MOVIE RELEASE DATE</a>
+    {% for result in results: %}
+      <a href="{{ url_for('add', movie_id=result.get('id')) }}"> {{ result.get("original_title") }} - {{ result.get("release_date") }}</a><br>
+    {% endfor %}
   </p>
 
 </div>
