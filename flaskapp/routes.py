@@ -1,8 +1,13 @@
+import os
 from flaskapp import app
+from flaskapp import db
+from flaskapp.forms import EditRatingAndReview, AddMovieForm
 from flask import render_template, redirect, url_for, request
 from models import Movie, get_all_movies
-from flaskapp import db
-from flaskapp.forms import AddMovieForm, EditRatingAndReview
+from dotenv import load_dotenv
+import requests
+
+load_dotenv()
 
 
 @app.route("/")
@@ -34,20 +39,29 @@ def delete(movie_id):
     return redirect(url_for("home"))
 
 
-@app.route("/add")
+@app.route("/add", methods=["GET", "POST"])
 def add():
     form = AddMovieForm()
+
+    if request.method == "POST":
+        params = {
+            "api_key": os.getenv("MOVIE_API_KEY"),
+            "query": request.form.get("title")
+        }
+        search_url = "https://api.themoviedb.org/3/search/movie"
+        search_response = requests.get(search_url, params=params)
+        movie_id = search_response.json().get("results")[0].get("id")
+        details_url = f"https://api.themoviedb.org/3/movie/{movie_id}"
+        details_response = requests.get(
+            details_url, params={"api_key": params["api_key"]})
+
+    # TODO:
+    # Add button redirects to '/select'
+    # After a movie is selected, that movie's id from api response should be passed to '/add'
+    # Redirect to '/edit' after movie is added successfully
+
     return render_template("add.html", form=form)
 
-    black_adam = Movie(
-        title="Black Adam",
-        year=2022,
-        description="After being bestowed with godly powers and imprisoned for it, Black Adam is liberated from his earthly binds to unleash his fury on the modern world.",
-        rating=4.5,
-        ranking=1,
-        review="Above average. One-time watch.",
-        img_url="https://www.google.com/imgres?imgurl=https%3A%2F%2Fstatic.dc.com%2F2022-11%2FBlack_Adam_S_DD_KA_TT_3000x3000_300dpi_EN.jpeg%3Fw%3D1200&imgrefurl=https%3A%2F%2Fwww.dc.com%2FBlackAdam&tbnid=IVQEWnXYl4HGVM&vet=12ahUKEwjN-Ma8vtj8AhWrjNgFHRrtBRYQMygNegUIARD5AQ..i&docid=T2CdjCllNsHMSM&w=1200&h=1200&itg=1&q=Black%20Adam&ved=2ahUKEwjN-Ma8vtj8AhWrjNgFHRrtBRYQMygNegUIARD5AQ"
-    )
     with app.app_context():
-        db.session.add(black_adam)
+        # db.session.add(new_movie)
         db.session.commit()
