@@ -15,9 +15,20 @@ class Movie(db.Model):
         return f"({self.title}, {self.year}, {self.description})"
 
 
-def get_all_movies():
+def get_ranked_movies():
+    """Fetch all movies from the database and update the rank 
+    by rating in ascending order.
+
+    Returns:
+        list: ranked movies 
+    """
     with app.app_context():
-        return Movie.query.all()
+        ranked_movies = Movie.query.order_by(Movie.rating)
+        for index, movie in enumerate(ranked_movies):
+            movie.ranking = 10 - index
+            db.session.commit()
+
+        return ranked_movies
 
 
 if __name__ == "__main__":

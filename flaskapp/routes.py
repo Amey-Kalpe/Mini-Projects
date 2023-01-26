@@ -3,7 +3,7 @@ from flaskapp import app
 from flaskapp import db
 from flaskapp.forms import EditRatingAndReview, AddMovieForm
 from flask import render_template, redirect, url_for, request
-from models import Movie, get_all_movies
+from models import Movie, get_ranked_movies
 from dotenv import load_dotenv
 import requests
 
@@ -12,7 +12,7 @@ load_dotenv()
 
 @app.route("/")
 def home():
-    return render_template("index.html", movies=get_all_movies())
+    return render_template("index.html", movies=get_ranked_movies())
 
 
 @app.route("/edit/<int:movie_id>", methods=["GET", "POST"])
