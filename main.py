@@ -62,18 +62,19 @@ class CreatePostForm(FlaskForm):
     submit = SubmitField("Submit Post")
 
 
-posts = row_to_dict(BlogPost.query.all())
+def fetch_posts():
+    return row_to_dict(BlogPost.query.all())
 
 
 @app.route("/")
 def get_all_posts():
-    return render_template("index.html", all_posts=posts)
+    return render_template("index.html", all_posts=fetch_posts())
 
 
 @app.route("/post/<int:index>")
 def show_post(index):
     requested_post = None
-    for blog_post in posts:
+    for blog_post in fetch_posts():
         if blog_post["id"] == index:
             requested_post = blog_post
     return render_template("post.html", post=requested_post)
@@ -82,12 +83,6 @@ def show_post(index):
 @app.route("/about")
 def about():
     return render_template("about.html")
-
-
-# @app.route("/show-post/<int:post_id>")
-# def show_post(post_id):
-#     post = BlogPost.query.get(post_id)
-#     return render_template("post.html", post=post)
 
 
 @app.route("/edit-post/<post_id>", methods=["GET", "POST"])
@@ -113,8 +108,8 @@ def edit_post(post_id):
 
 @app.route("/new-post", methods=["GET", "POST"])
 def create_post():
+    form = CreatePostForm()
     if request.method == "POST":
-        form = CreatePostForm()
         if form.validate_on_submit():
             req_form = request.form
             post = BlogPost(
@@ -129,6 +124,13 @@ def create_post():
             db.session.commit()
             return redirect(url_for("get_all_posts"))
     return render_template("make-post.html", form=form, header="New Post")
+
+
+@app.route("/delete/<int:post_id>")
+def delete_post(post_id):
+    BlogPost.query.filter_by(id=post_id).delete()
+    db.session.commit()
+    return redirect(url_for("get_all_posts"))
 
 
 @app.route("/contact")
