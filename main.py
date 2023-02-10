@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from urllib.parse import urlparse, urljoin 
+from flask import Flask, render_template, redirect, url_for, flash, request, abort
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from datetime import date
@@ -6,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
-from forms import CreatePostForm, RegistrationForm
+from forms import CreatePostForm, RegistrationForm, LoginForm
 from flask_gravatar import Gravatar
 
 app = Flask(__name__)
@@ -19,33 +20,57 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+##FLASK lOGIN
+login_manager = LoginManager()
+login_manager.init_app(app)
 
+def admin_only(func):
+    
+    def wrapper(*args, **kwargs):
+        if current_user.id == 1:
+            func()
+        
+        return abort(403)
+
+    return wrapper
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
+           
 ##CONFIGURE TABLES
-
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id = db.Column(db.Integer, primary_key=True)
-    author = db.Column(db.String(250), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     title = db.Column(db.String(250), unique=True, nullable=False)
     subtitle = db.Column(db.String(250), nullable=False)
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
+    author = relationship("User", back_populates="posts")
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    posts = relationship("BlogPost", back_populates="author")
 
-db.create_all()
+# db.create_all()
 
 
 @app.route('/')
 def get_all_posts():
     posts = BlogPost.query.all()
-    return render_template("index.html", all_posts=posts)
+    return render_template("index.html", all_posts=posts, logged_in=current_user.is_authenticated)
 
 
 @app.route('/register', methods=["GET", "POST"])
@@ -54,6 +79,10 @@ def register():
     if request.method == "POST":
         if registration_form.validate_on_submit():
             req_form = request.form
+            user = User.query.filter_by(email=req_form.get("email")).first()
+            if user:
+                flash("User already exists. Please login instead.")
+                return redirect(url_for("login"))
             name = req_form.get("name")
             email = req_form.get("email")
             password = req_form.get("password")
@@ -68,13 +97,39 @@ def register():
     return render_template("register.html", form=registration_form)
 
 
-@app.route('/login')
+@app.route('/login', methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    form = LoginForm()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            req_form = request.form
+            user = User.query.filter_by(email=req_form.get("email")).first()
+            if not user:
+                flash("This user doesn't exist. Please register first.", category="error")
+                return redirect(url_for("register"))
+            valid = check_password_hash(
+                user.password,
+                req_form.get("password")
+            )
+        
+            if valid:
+                login_user(user)
+            
+                next_ = request.args.get("next")
+                
+                if not is_safe_url(next_):
+                    return abort(400)
+                
+                return redirect(next_ or url_for("get_all_posts"))
+                
+        flash("Invalid Credentials. Please try to login again.", category="error")
+        return redirect(url_for("login"))
+    return render_template("login.html", form=form)
 
 
 @app.route('/logout')
 def logout():
+    logout_user()
     return redirect(url_for('get_all_posts'))
 
 
@@ -93,25 +148,27 @@ def about():
 def contact():
     return render_template("contact.html")
 
-
-@app.route("/new-post")
+@admin_only
+@app.route("/new-post", methods=["GET", "POST"])
 def add_new_post():
     form = CreatePostForm()
-    if form.validate_on_submit():
-        new_post = BlogPost(
-            title=form.title.data,
-            subtitle=form.subtitle.data,
-            body=form.body.data,
-            img_url=form.img_url.data,
-            author=current_user,
-            date=date.today().strftime("%B %d, %Y")
-        )
-        db.session.add(new_post)
-        db.session.commit()
-        return redirect(url_for("get_all_posts"))
+    if request.method == "POST":
+        if form.validate_on_submit():
+            new_post = BlogPost(
+                title=form.title.data,
+                subtitle=form.subtitle.data,
+                body=form.body.data,
+                img_url=form.img_url.data,
+                author=current_user,
+                date=date.today().strftime("%B %d, %Y")
+            )
+            db.session.add(new_post)
+            db.session.commit()
+            return redirect(url_for("get_all_posts"))
     return render_template("make-post.html", form=form)
 
 
+@admin_only
 @app.route("/edit-post/<int:post_id>")
 def edit_post(post_id):
     post = BlogPost.query.get(post_id)
@@ -134,6 +191,7 @@ def edit_post(post_id):
     return render_template("make-post.html", form=edit_form)
 
 
+@admin_only
 @app.route("/delete/<int:post_id>")
 def delete_post(post_id):
     post_to_delete = BlogPost.query.get(post_id)
@@ -143,4 +201,4 @@ def delete_post(post_id):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
