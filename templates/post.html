@@ -1,3 +1,4 @@
+{% set logged_in = True %}
 {% include "header.html" %}
 
   <!-- Page Header -->
@@ -10,7 +11,7 @@
             <h1>{{post.title}}</h1>
             <h2 class="subheading">{{post.subtitle}}</h2>
             <span class="meta">Posted by
-              <a href="#">{{post.author}}</a>
+              <a href="#">{{post.author.name}}</a>
               on {{post.date}}</span>
           </div>
         </div>
@@ -27,7 +28,11 @@
           <hr>
 
             <div class="clearfix">
-            <a class="btn btn-primary float-right" href="{{url_for('edit_post', post_id=post.id)}}">Edit Post</a>
+              {% if current_user.is_authenticated: %}
+                {% if current_user.id == 1: %}
+                  <a class="btn btn-primary float-right" href="{{url_for('edit_post', post_id=post.id)}}">Edit Post</a>
+                {% endif %}
+              {% endif %}
             </div>
 
 
